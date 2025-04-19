@@ -1,6 +1,10 @@
 ﻿using System.Security.Claims;
 using Job_Portal_Project.Models;
 using Job_Portal_Project.ViewModels;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,7 +50,7 @@ namespace Job_Portal_Project.Controllers
                 {
                     //to assign admins ==>>
                     //await userManager.AddToRoleAsync(userFromDB, "Admin");
-                    await signInManager.SignInAsync(userFromDB,false);
+                    await signInManager.SignInAsync(userFromDB, false);
                     return RedirectToAction("Index", "Home");
                 }
                 else
@@ -63,7 +67,7 @@ namespace Job_Portal_Project.Controllers
         #endregion
 
         #region Login
-  
+
         public IActionResult Login()
         {
             return View();
@@ -89,7 +93,7 @@ namespace Job_Portal_Project.Controllers
                         claims.Add(new Claim("Company", userFromDB.Company));
 
                         //await signInManager.SignInAsync(userFromDB, loginVM.RememberMe);
-                        await signInManager.SignInWithClaimsAsync(userFromDB, loginVM.RememberMe,claims);
+                        await signInManager.SignInWithClaimsAsync(userFromDB, loginVM.RememberMe, claims);
 
                         return RedirectToAction("Index", "Home");
                     }
@@ -99,6 +103,33 @@ namespace Job_Portal_Project.Controllers
 
             }
             return View("Login", loginVM);
+        }
+        #endregion
+
+        #region External login 
+        public IActionResult RedirectToLocal(string returnUrl)
+        {
+            if (Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            else
+            {
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        public IActionResult GoogleLogin(string returnUrl = null)
+        {
+            var redirectUrl = Url.Action("GoogleCallBack", "Account", new { returnUrl });
+            var properries = new AuthenticationProperties { RedirectUri = redirectUrl };
+            return Challenge(properries, GoogleDefaults.AuthenticationScheme);
+        }
+
+        public async Task<IActionResult> GoogleCallBack(string returnUrl = null)
+        {
+            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToLocal(returnUrl);
         }
         #endregion
     }

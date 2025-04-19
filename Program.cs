@@ -1,5 +1,6 @@
 //using Job_Portal_Project.Data;
 using Job_Portal_Project.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,17 @@ namespace Job_Portal_Project
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                })
+                .AddGoogle(options =>
+                {
+                    options.ClientId = "";
+                    options.ClientSecret = "";
+                });
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<JobPortalContext>(options =>
@@ -48,7 +60,8 @@ namespace Job_Portal_Project
             app.UseRouting();
 
             app.UseSession();
-
+            
+            app.UseAuthorization();
             app.UseAuthorization();
 
             app.MapStaticAssets();
